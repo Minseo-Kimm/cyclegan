@@ -9,8 +9,11 @@ from torch.utils.tensorboard import SummaryWriter
 from util import *
 from dataloader import *
 
-writer_train = SummaryWriter(log_dir=os.path.join(log_dir, 'train'))
-#writer_test = SummaryWriter(log_dir=os.path.join(log_dir, 'test'))
+log_train_dir = os.path.join(log_dir, 'train')
+log_test_dir = os.path.join(log_dir, 'test')
+writer_train = SummaryWriter(log_dir=log_train_dir)
+#writer_test = SummaryWriter(log_dir=log_test_dir)
+memo = open(os.path.join(log_train_dir, 'ver%d.txt' % version), 'a')
 
 gc.collect()
 torch.cuda.empty_cache()
@@ -39,7 +42,7 @@ G_b2a = Generator(in_chs=3, out_chs=3, num_blk=9).to(device)
 D_a = Discriminator(in_chs=3, out_chs=1).to(device)
 D_b = Discriminator(in_chs=3, out_chs=1).to(device)
 
-# weight initialization ???
+# weight initialization
 init_weights(G_a2b)
 init_weights(G_b2a)
 init_weights(D_a)
@@ -86,7 +89,7 @@ for epoch in range(st_epoch, epochs):
         cyc_B = G_a2b(out_A)
 
         # backward D
-        if (batch % 5 == 1):
+        if (batch % 10 == 1):
             optimD.zero_grad()
 
             pred_real_a = D_a(in_A)
@@ -101,7 +104,7 @@ for epoch in range(st_epoch, epochs):
             loss_D_b_fake = fn_GAN(pred_fake_b, torch.zeros_like(pred_fake_b))
             loss_D_b = 0.5 * (loss_D_b_real + loss_D_b_fake)
 
-            loss_D = loss_D_a + loss_D_b
+            loss_D = 0.5 * (loss_D_a + loss_D_b)
             loss_D.backward()
             optimD.step()
 
@@ -148,9 +151,9 @@ for epoch in range(st_epoch, epochs):
                   "G CYC : %.4f, %.4f | G GAN : %.4f, %.4f | "
                   "D : %.4f, %.4f " %
                   (epoch + 1, epochs, batch, num_batch_train,
-                   loss_G_a_cyc.item(), loss_G_b_cyc.item(),
-                   loss_G_a2b_GAN.item(), loss_G_b2a_GAN.item(),
-                   loss_D_a.item(), loss_D_b.item()))
+                   np.mean(loss_G_a_cyc_train), np.mean(loss_G_b_cyc_train),
+                   np.mean(loss_G_a2b_GAN_train), np.mean(loss_G_b2a_GAN_train),
+                   np.mean(loss_D_a_train), np.mean(loss_D_b_train)))
         
         if (batch % 20 == 0) :
             in_A = transform_inv(in_A)
@@ -179,7 +182,14 @@ for epoch in range(st_epoch, epochs):
     writer_train.add_scalar('loss_D_a', np.mean(loss_D_a_train), epoch+1)
     writer_train.add_scalar('loss_D_b', np.mean(loss_D_b_train), epoch+1)
 
+    result = "EPOCH %03d | CYC : %.4f, %.4f | GAN : %.4f, %.4f | D : %.4f, %.4f\n" \
+        % ((epoch+1), np.mean(loss_G_a_cyc_train), np.mean(loss_G_b_cyc_train),
+           np.mean(loss_G_a2b_GAN_train), np.mean(loss_G_b2a_GAN_train),
+           np.mean(loss_D_a_train), np.mean(loss_D_b_train))
+    memo.write(result)
+
     if (True):
         save(ckpt_dir=ckpt_dir, netG_a2b=G_a2b, netG_b2a=G_b2a, netD_a=D_a, netD_b=D_b, optimG=optimG, optimD=optimD, epoch=epoch, ver=version)
     
 writer_train.close()
+memo.close()
