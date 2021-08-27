@@ -7,12 +7,12 @@ from model import *
 # Training parameters
 useSave = False
 useIdLoss = True
-version = 13
+version = 15
 lr = 2e-4
 batch_size = 4
 epochs = 100
-wgt_cyc = 10
-wgt_id = 5
+wgt_cyc = 10.0
+wgt_id = 5.0
 direction = 'A2B'       # 'A2B' or 'B2A'
 
 # ver4 : batch 2번마다 D가 1번 update되도록 변경
@@ -25,6 +25,8 @@ direction = 'A2B'       # 'A2B' or 'B2A'
 # ver11 : D 마지막의 sigmoid 제거, GAN loss function을 BCE에서 MSE로 변경, batch 5번마다 D가 1번 update
 # ver12 : D loss를 2로 나누어줌
 # ver13 : wgt_cyc = 10, wgt_id = 5, batch 10번마다 D가 1번 update
+# ver14 : batch 5번마다 D가 1번 update, epoch 3 이후부터는 D loss를 4로 나누어줌
+# ver15 : batch 10번마다 D가 1번 update, D loss를 4로 나누어줌
 
 # Directories
 def makeDir(dir):

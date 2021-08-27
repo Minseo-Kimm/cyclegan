@@ -104,7 +104,7 @@ for epoch in range(st_epoch, epochs):
             loss_D_b_fake = fn_GAN(pred_fake_b, torch.zeros_like(pred_fake_b))
             loss_D_b = 0.5 * (loss_D_b_real + loss_D_b_fake)
 
-            loss_D = 0.5 * (loss_D_a + loss_D_b)
+            loss_D = 0.25 * (loss_D_a + loss_D_b)
             loss_D.backward()
             optimD.step()
 
